@@ -1,0 +1,49 @@
+backends:
+  - vendor: nvidia
+    backend_name: H800
+    runner_label: jiuding
+    gpus: "0,1,2,3,4,5,6,7"
+    output_base_dir: /data/flaggems/weekly
+    api_key: op-monitor-upload-key-2024
+
+  - vendor: iluvatar
+    backend_name: Iluvatar
+    runner_label: iluvatar
+    gpus: "0,1,2,3"
+    output_base_dir: /data/flaggems/weekly
+    api_key: op-monitor-upload-key-2024
+
+  - vendor: hygon
+    backend_name: Hygon
+    runner_label: hygon
+    gpus: "0,1,2,3,4,5,6,7"
+    output_base_dir: /data/flaggems/weekly
+    api_key: op-monitor-upload-key-2024
+
+  - vendor: enflame
+    backend_name: Enflame
+    runner_label: enflame
+    gpus: "0,1,2,3"
+    output_base_dir: /data/flaggems/weekly
+    api_key: op-monitor-upload-key-2024
+
+  - vendor: mthreads
+    backend_name: MThreads
+    runner_label: mthreads
+    gpus: "0,1,2,3"
+    output_base_dir: /data/flaggems/weekly
+    api_key: op-monitor-upload-key-2024
+
+  - vendor: thead
+    backend_name: Thead
+    runner_label: thead
+    gpus: "0,1,2,3"
+    output_base_dir: /data/flaggems/weekly
+    api_key: op-monitor-upload-key-2024
+
+  - vendor: tsingmicro
+    backend_name: TsingMicro
+    runner_label: tsingmicro
+    gpus: "0,1,2,3"
+    output_base_dir: /data/flaggems/weekly
+    api_key: op-monitor-upload-key-2024

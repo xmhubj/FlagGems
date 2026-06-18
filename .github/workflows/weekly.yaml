@@ -1,0 +1,115 @@
+# Weekly full-range test workflow
+#
+# Runs every Monday at 04:00 Beijing time (UTC 20:00 Sunday) against all
+# operator stages on all configured vendor backends in parallel.
+#
+# Vendor configuration (runner label, GPU list, output dir, backend name,
+# and API key) is read from .github/configs/weekly.yaml.
+
+name: weekly
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    # Monday 04:00 Beijing time = Sunday 20:00 UTC
+    - cron: '0 20 * * 0'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      date: ${{ steps.get-date.outputs.DATE }}
+      matrix: ${{ steps.build-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - id: get-date
+        shell: bash
+        run: echo "DATE=$(date -u '+%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+      - id: build-matrix
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const yaml = require('js-yaml');
+            const raw = fs.readFileSync('.github/configs/weekly.yaml', 'utf8');
+            const cfg = yaml.load(raw);
+            const matrix = { include: cfg.backends };
+            core.setOutput('matrix', JSON.stringify(matrix));
+
+  test:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    concurrency:
+      group: weekly-test-${{ matrix.backend_name }}
+      cancel-in-progress: true
+    runs-on: ${{ matrix.runner_label }}
+    env:
+      DATE: ${{ needs.prepare.outputs.date }}
+      OUTPUT_DIR: ${{ matrix.output_base_dir }}/${{ needs.prepare.outputs.date }}/logs_results_${{ needs.prepare.outputs.date }}
+    steps:
+      - id: checkout-attempt-1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        continue-on-error: true
+      - id: sleep-1
+        if: steps.checkout-attempt-1.outcome == 'failure'
+        shell: bash
+        run: sleep 30s
+
+      - id: checkout-attempt-2
+        if: steps.checkout-attempt-1.outcome == 'failure'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        continue-on-error: true
+      - id: sleep-2
+        if: steps.checkout-attempt-2.outcome == 'failure'
+        shell: bash
+        run: sleep 30s
+
+      - id: checkout-attempt-3
+        if: steps.checkout-attempt-2.outcome == 'failure'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Check GPU availability
+        shell: bash
+        run: bash tools/gpu_check.sh
+
+      - name: Run weekly tests
+        shell: bash
+        run: |
+          python3 tools/run_tests.py \
+            --gpus "${{ matrix.gpus }}" \
+            --stages all \
+            --dump-output \
+            --output "${OUTPUT_DIR}"
+
+      - name: Package results
+        if: always()
+        shell: bash
+        run: |
+          ARCHIVE="${{ runner.temp }}/weekly-${{ matrix.vendor }}-${DATE}.tar.gz"
+          tar -czf "${ARCHIVE}" -C "$(dirname "${OUTPUT_DIR}")" "$(basename "${OUTPUT_DIR}")"
+          echo "ARCHIVE=${ARCHIVE}" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: weekly-${{ matrix.vendor }}-${{ needs.prepare.outputs.date }}
+          path: ${{ runner.temp }}/weekly-${{ matrix.vendor }}-${{ needs.prepare.outputs.date }}.tar.gz
+
+      - name: Publish results to op-monitor
+        shell: bash
+        run: |
+          curl -X POST "http://10.1.4.213:31080/api/upload/archive" \
+            -H "X-API-Key: ${{ matrix.api_key }}" \
+            -F "file=@${ARCHIVE}" \
+            -F "library_name=FlagGems" \
+            -F "backend_name=${{ matrix.backend_name }}" \
+            -F "test_date=${DATE}"
