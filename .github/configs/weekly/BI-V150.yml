@@ -1,0 +1,34 @@
+# FlagGems backends Configuration
+# This file defines environment settings for weekly testing
+name: BI-V150
+vendor: Iluvatar
+
+# Runner labels for this backends (self-hosted)
+runner_labels: v150-flaggems-weekly
+
+# Container image for this backends
+container_image: harbor.baai.ac.cn/flaggems/iluvatar-flaggems-test-bi-v150:20260526
+
+# Container volumes to mount for this backends
+container_volumes:
+  - /data1:/data1
+  - /lib/modules:/lib/modules
+  - /dev:/dev
+  - /etc/localtime:/etc/localtime:ro
+  - /home:/home
+  - /tmp:/tmp
+
+# Container options for this backends
+container_options: >-
+  --net=host
+  --ipc=host
+  --privileged
+  --cap-add=ALL
+  --security-opt seccomp=unconfined
+  --workdir=/root
+
+# GPUs to test for this backends
+test_gpus: "0,1,2,3,4,5,6,7"
+
+# Output base directory for this backends
+output_base_dir: /home/flaggems/weekly

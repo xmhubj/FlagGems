@@ -1,10 +1,10 @@
 # Weekly full-range test workflow
 #
 # Runs every Monday at 04:00 Beijing time (UTC 20:00 Sunday) against all
-# operator stages on all configured vendor backends in parallel.
+# operator stages on all enabled backends in parallel.
 #
-# Vendor configuration (runner label, GPU list, output dir, backend name,
-# and API key) is read from .github/configs/weekly.yaml.
+# Main config: .github/configs/weekly/weekly-test.yaml
+# Per-backend config: .github/configs/weekly/<NAME>.yml
 
 name: weekly
 
@@ -24,6 +24,8 @@ jobs:
     outputs:
       date: ${{ steps.get-date.outputs.DATE }}
       matrix: ${{ steps.build-matrix.outputs.matrix }}
+      api: ${{ steps.build-matrix.outputs.api }}
+      api_key: ${{ steps.build-matrix.outputs.api_key }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
@@ -37,10 +39,20 @@ jobs:
           script: |
             const fs = require('fs');
             const yaml = require('js-yaml');
-            const raw = fs.readFileSync('.github/configs/weekly.yaml', 'utf8');
-            const cfg = yaml.load(raw);
-            const matrix = { include: cfg.backends };
-            core.setOutput('matrix', JSON.stringify(matrix));
+
+            const main = yaml.load(fs.readFileSync('.github/configs/weekly/weekly-test.yaml', 'utf8'));
+
+            const include = [];
+            for (const [name, cfg] of Object.entries(main.backends)) {
+              if (!cfg.enabled) continue;
+              const backendFile = `.github/configs/weekly/${name}.yml`;
+              const backend = yaml.load(fs.readFileSync(backendFile, 'utf8'));
+              include.push(backend);
+            }
+
+            core.setOutput('matrix', JSON.stringify({ include }));
+            core.setOutput('api', main.server.api);
+            core.setOutput('api_key', main.server.api_key);
 
   test:
     needs: prepare
@@ -48,9 +60,9 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     concurrency:
-      group: weekly-test-${{ matrix.backend_name }}
+      group: weekly-test-${{ matrix.name }}
       cancel-in-progress: true
-    runs-on: ${{ matrix.runner_label }}
+    runs-on: ${{ matrix.runner_labels }}
     env:
       DATE: ${{ needs.prepare.outputs.date }}
       OUTPUT_DIR: ${{ matrix.output_base_dir }}/${{ needs.prepare.outputs.date }}/logs_results_${{ needs.prepare.outputs.date }}
@@ -84,7 +96,7 @@ jobs:
         shell: bash
         run: |
           python3 tools/run_tests.py \
-            --gpus "${{ matrix.gpus }}" \
+            --gpus "${{ matrix.test_gpus }}" \
             --stages all \
             --dump-output \
             --output "${OUTPUT_DIR}"
@@ -93,7 +105,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          ARCHIVE="${{ runner.temp }}/weekly-${{ matrix.vendor }}-${DATE}.tar.gz"
+          ARCHIVE="${{ runner.temp }}/weekly-${{ matrix.name }}-${DATE}.tar.gz"
           tar -czf "${ARCHIVE}" -C "$(dirname "${OUTPUT_DIR}")" "$(basename "${OUTPUT_DIR}")"
           echo "ARCHIVE=${ARCHIVE}" >> "$GITHUB_ENV"
 
@@ -101,15 +113,15 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: weekly-${{ matrix.vendor }}-${{ needs.prepare.outputs.date }}
-          path: ${{ runner.temp }}/weekly-${{ matrix.vendor }}-${{ needs.prepare.outputs.date }}.tar.gz
+          name: weekly-${{ matrix.name }}-${{ needs.prepare.outputs.date }}
+          path: ${{ runner.temp }}/weekly-${{ matrix.name }}-${{ needs.prepare.outputs.date }}.tar.gz
 
       - name: Publish results to op-monitor
         shell: bash
         run: |
-          curl -X POST "http://10.1.4.213:31080/api/upload/archive" \
-            -H "X-API-Key: ${{ matrix.api_key }}" \
+          curl -X POST "${{ needs.prepare.outputs.api }}" \
+            -H "X-API-Key: ${{ needs.prepare.outputs.api_key }}" \
             -F "file=@${ARCHIVE}" \
             -F "library_name=FlagGems" \
-            -F "backend_name=${{ matrix.backend_name }}" \
+            -F "backend_name=${{ matrix.name }}" \
             -F "test_date=${DATE}"

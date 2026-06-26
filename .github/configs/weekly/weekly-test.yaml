@@ -1,0 +1,24 @@
+server:
+  api: http://10.1.4.213:31080/api/upload/archive
+  api_key: op-monitor-upload-key-2024
+
+backends:
+  H800:
+    enabled: true
+  910B:
+    enabled: false
+  C550:
+    enabled: false
+  BW1000:
+    enabled: false
+  MTT-S5000:
+    enabled: false
+  BI-V150:
+    enabled: false
+  PPU-ZW810E:
+    enabled: false
+  MLU590-M9DE:
+    enabled: false
+  P800:
+    enabled: false
+  
