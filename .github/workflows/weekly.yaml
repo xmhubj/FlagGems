@@ -92,7 +92,7 @@ jobs:
 
       - name: Check GPU availability
         shell: bash
-        run: bash tools/gpu_check.sh
+        run: bash ${{ matrix.gpu_check_script }}
 
       - name: Run weekly tests
         shell: bash
