@@ -23,7 +23,7 @@ container_options: >-
   --user 0
   --security-opt=seccomp=unconfined
   --privileged
-  --ulimit=stack=67108864 
+  --ulimit=stack=67108864
   --ulimit=memlock=-1
   --shm-size=32G
   --gpus all
