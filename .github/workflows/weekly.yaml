@@ -65,6 +65,10 @@ jobs:
       group: weekly-test-${{ matrix.name }}
       cancel-in-progress: true
     runs-on: ${{ matrix.runner_labels }}
+    container:
+      image: ${{ matrix.container_image }}
+      options: ${{ matrix.container_options }}
+      volumes: ${{ matrix.container_volumes }}
     env:
       DATE: ${{ needs.prepare.outputs.date }}
       OUTPUT_DIR: ${{ matrix.output_base_dir }}/${{ needs.prepare.outputs.date }}/logs_results_${{ needs.prepare.outputs.date }}
