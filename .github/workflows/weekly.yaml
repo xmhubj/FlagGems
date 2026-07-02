@@ -103,12 +103,25 @@ jobs:
         shell: bash
         run: bash ${{ matrix.gpu_check_script }}
 
+      # Run weekly tests for all operator stages
+      # - name: Run weekly tests
+      #   shell: bash
+      #   run: |
+      #     python3 tools/run_tests.py \
+      #       --gpus "${{ matrix.test_gpus }}" \
+      #       --stages all \
+      #       --dump-output \
+      #       --output "${OUTPUT_DIR}"
+
+      # Run weekly tests for selected operators (abs, sum, add)
+      # This is a smoke test to quickly verify the weekly testing pipeline
+      # and the backend environment.
       - name: Run weekly tests
         shell: bash
         run: |
           python3 tools/run_tests.py \
             --gpus "${{ matrix.test_gpus }}" \
-            --stages all \
+            --ops abs,sum,add \
             --dump-output \
             --output "${OUTPUT_DIR}"
 
@@ -134,3 +147,16 @@ jobs:
             -F "library_name=FlagGems" \
             -F "backend_name=${{ matrix.name }}" \
             -F "test_date=${DATE}"
+
+      - name: Send Feishu notification
+        if: always()
+        timeout-minutes: 5
+        continue-on-error: true
+        env:
+          CI_STATUS: ${{ job.status }}
+          PLATFORM: ${{ matrix.name }}
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+          FEISHU_CHAT_ID: ${{ secrets.FEISHU_CHAT_ID }}
+        shell: bash
+        run: python3 .github/scripts/notify_feishu.py
