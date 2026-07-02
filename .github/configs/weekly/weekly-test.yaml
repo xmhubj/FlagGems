@@ -14,7 +14,7 @@ backends:
   MTT-S5000:
     enabled: false
   BI-V150:
-    enabled: false
+    enabled: true
   PPU-ZW810E:
     enabled: false
   MLU590-M9DE:
