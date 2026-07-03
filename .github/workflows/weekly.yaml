@@ -49,6 +49,7 @@ jobs:
                   continue
               with open(f'.github/configs/weekly/{name}.yml') as f:
                   backend = yaml.safe_load(f)
+              backend['test_env'] = json.dumps(backend.get('test_env') or {})
               include.append(backend)
 
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
@@ -118,6 +119,7 @@ jobs:
       # and the backend environment.
       - name: Run weekly tests
         shell: bash
+        env: ${{ fromJSON(matrix.test_env) }}
         run: |
           python3 tools/run_tests.py \
             --gpus "${{ matrix.test_gpus }}" \

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Send CI status notification to Feishu via Bot API."""
+"""Send Test status notification to Feishu via Bot API."""
 
 import json
 import os
@@ -122,9 +122,9 @@ def main():
     }
     emoji, text, color = status_map.get(ci_status, ("\u274c", "Failed", "red"))
 
-    title = f"CI {text} \u2014 {repo}"
+    title = f"Test {text} \u2014 {repo}"
     if platform:
-        title = f"CI {text} [{platform}] \u2014 {repo}"
+        title = f"Test {text} [{platform}] \u2014 {repo}"
 
     card_content = {
         "config": {"wide_screen_mode": True},
