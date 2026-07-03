@@ -6,7 +6,7 @@ backends:
   H800:
     enabled: true
   910B:
-    enabled: false
+    enabled: true
   C550:
     enabled: false
   BW1000:

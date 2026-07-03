@@ -7,7 +7,7 @@ vendor: Ascend
 runner_labels: 910b-flaggems-weekly
 
 # Container image for this backends
-container_image: harbor.baai.ac.cn/flaggems/huawei-flaggems-test-910b4-1-flagtree-3-5:20260618
+container_image: harbor.baai.ac.cn/flaggems/huawei-flaggems-test-910b4-1-flagtree-3-5:20260701
 
 # Container volumes to mount for this backends
 container_volumes:

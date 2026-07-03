@@ -7,7 +7,7 @@ vendor: MThreads
 runner_labels: s5000-flaggems-weekly
 
 # Container image for this backends
-container_image: harbor.baai.ac.cn/flaggems/mthreads-flaggems-test-mtt-s5000:20260526
+container_image: harbor.baai.ac.cn/flaggems/mthreads-flaggems-test-mtt-s5000:20260701
 
 # Container volumes to mount for this backends
 container_volumes:

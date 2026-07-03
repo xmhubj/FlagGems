@@ -7,7 +7,7 @@ vendor: Metax
 runner_labels: c550-flaggems-weekly
 
 # Container image for this backends
-container_image: harbor.baai.ac.cn/flaggems/metax-flaggems-test-c550:20260526
+container_image: harbor.baai.ac.cn/flaggems/metax-flaggems-test-c550:20260701
 
 # Container volumes to mount for this backends
 container_volumes:
