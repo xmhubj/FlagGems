@@ -80,12 +80,8 @@ jobs:
       options: ${{ matrix.container_options }}
       volumes: ${{ matrix.container_volumes }}
     env:
-      HOME: /root
       DATE: ${{ needs.prepare.outputs.date }}
       OUTPUT_DIR: ${{ matrix.output_base_dir }}/${{ needs.prepare.outputs.date }}/logs_results_${{ needs.prepare.outputs.date }}
-    defaults:
-      run:
-        shell: bash --login -e -o pipefail {0}
     steps:
       - id: checkout-attempt-1
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
@@ -112,13 +108,19 @@ jobs:
         run: git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Install FlagGems dependencies
+        env:
+          PIP_CACHE_DIR: /root/.cache/pip
+        shell: bash --login -e -o pipefail {0}
         run: pip install .
 
       - name: Check GPU availability
+        shell: bash --login -e -o pipefail {0}
         run: bash ${{ matrix.gpu_check_script }}
 
       # Run weekly tests for all operator stages
       # - name: Run weekly tests
+      #   env: ${{ fromJSON(matrix.test_env) }}
+      #   shell: bash --login -e -o pipefail {0}
       #   run: |
       #     python3 tools/run_tests.py \
       #       --gpus "${{ matrix.test_gpus }}" \
@@ -131,6 +133,7 @@ jobs:
       # and the backend environment.
       - name: Run weekly tests
         env: ${{ fromJSON(matrix.test_env) }}
+        shell: bash --login -e -o pipefail {0}
         run: |
           python3 tools/run_tests.py \
             --gpus "${{ matrix.test_gpus }}" \
@@ -223,6 +226,7 @@ jobs:
       # Run weekly tests for all operator stages
       # - name: Run weekly tests
       #   shell: bash
+      #   env: ${{ fromJSON(matrix.test_env) }}
       #   run: |
       #     python3 tools/run_tests.py \
       #       --gpus "${{ matrix.test_gpus }}" \
