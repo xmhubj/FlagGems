@@ -1,6 +1,5 @@
 server:
   api: http://10.1.4.213:31080/api/upload/archive
-  api_key: op-monitor-upload-key-2024
 
 backends:
   H800:
